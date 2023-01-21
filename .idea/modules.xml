@@ -8,9 +8,10 @@
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/app/NordicID_Library.app.main.iml" filepath="$PROJECT_DIR$/.idea/modules/app/NordicID_Library.app.main.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/app/NordicID_Library.app.unitTest.iml" filepath="$PROJECT_DIR$/.idea/modules/app/NordicID_Library.app.unitTest.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/mylibrary/NordicID_Library.mylibrary.iml" filepath="$PROJECT_DIR$/.idea/modules/mylibrary/NordicID_Library.mylibrary.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/mylibrary/NordicID_Library.mylibrary.androidTest.iml" filepath="$PROJECT_DIR$/.idea/modules/mylibrary/NordicID_Library.mylibrary.androidTest.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/mylibrary/NordicID_Library.mylibrary.main.iml" filepath="$PROJECT_DIR$/.idea/modules/mylibrary/NordicID_Library.mylibrary.main.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/mylibrary/NordicID_Library.mylibrary.unitTest.iml" filepath="$PROJECT_DIR$/.idea/modules/mylibrary/NordicID_Library.mylibrary.unitTest.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/techno_helper/NordicID_Library.techno_helper.iml" filepath="$PROJECT_DIR$/.idea/modules/techno_helper/NordicID_Library.techno_helper.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/techno_helper/NordicID_Library.techno_helper.androidTest.iml" filepath="$PROJECT_DIR$/.idea/modules/techno_helper/NordicID_Library.techno_helper.androidTest.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/techno_helper/NordicID_Library.techno_helper.main.iml" filepath="$PROJECT_DIR$/.idea/modules/techno_helper/NordicID_Library.techno_helper.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/techno_helper/NordicID_Library.techno_helper.unitTest.iml" filepath="$PROJECT_DIR$/.idea/modules/techno_helper/NordicID_Library.techno_helper.unitTest.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/techno_rfid/NordicID_Library.techno_rfid.iml" filepath="$PROJECT_DIR$/.idea/modules/techno_rfid/NordicID_Library.techno_rfid.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/techno_rfid/NordicID_Library.techno_rfid.androidTest.iml" filepath="$PROJECT_DIR$/.idea/modules/techno_rfid/NordicID_Library.techno_rfid.androidTest.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/techno_rfid/NordicID_Library.techno_rfid.main.iml" filepath="$PROJECT_DIR$/.idea/modules/techno_rfid/NordicID_Library.techno_rfid.main.iml" />

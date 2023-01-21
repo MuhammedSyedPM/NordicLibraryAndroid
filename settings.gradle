@@ -15,3 +15,4 @@ dependencyResolutionManagement {
 rootProject.name = "NordicID Library"
 include ':app', ':techno_rfid'
 include ':mylibrary'
+include ':techno_helper'

@@ -92,7 +92,7 @@ public class NordicSettingsActivity extends AppCompatActivity implements NurApiL
             connectReader();
         });
         findViewById(R.id.backButton).setOnClickListener(v -> {
-            finish();
+            super.onBackPressed();
         });
         // setupViewPager();
 
@@ -197,7 +197,7 @@ public class NordicSettingsActivity extends AppCompatActivity implements NurApiL
 
     private void setupViewPager() {
         viewPager.setVisibility(View.VISIBLE);
-        tabLayout.setVisibility(View.VISIBLE);
+        tabLayout.setVisibility(View.GONE);
         ArrayList<Fragment> fragmentList = new ArrayList<Fragment>();
         fragmentList.add(new RFIDReaderSettingsFragment());
         //fragmentList.add(new ReaderFragment());
@@ -205,11 +205,10 @@ public class NordicSettingsActivity extends AppCompatActivity implements NurApiL
 
         viewPager.setAdapter(new ViewPagerAdapter(this, fragmentList));
         //binding.viewPager.setPageTransformer(ZoomOutPageTransformer())
-        String[] title = new String[]{"RFID", "Reader", "Antenna Tuning"};
+        String[] title = new String[]{"RFID"/*, "Reader", "Antenna Tuning"*/};
         new TabLayoutMediator(tabLayout, viewPager,
                 (tab, position) -> tab.setText(title[position])
         ).attach();
-        tabLayout.setVisibility(View.GONE);
     }
 
     @Override

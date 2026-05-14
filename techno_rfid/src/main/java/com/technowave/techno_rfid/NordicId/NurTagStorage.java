@@ -13,7 +13,7 @@ public class NurTagStorage
     private boolean mRemoveXPC;
     private NurApi mApi;
     Hashtable<String, NurTag> mTagHash;
-    ArrayList<NurTag> mTagList;
+    public ArrayList<NurTag> mTagList;
     
     public NurTagStorage() {
         this.mRemoveXPC = true;

@@ -16,6 +16,12 @@
     </style>
 
 
+    <style name="DialogAnimationSlideUp">
+        <item name="android:windowEnterAnimation">@android:anim/slide_in_left</item>
+        <item name="android:windowExitAnimation">@android:anim/slide_out_right</item>
+    </style>
+
+
     <style name="ExtendedTextInputLayout" parent="Widget.MaterialComponents.TextInputLayout.OutlinedBox.Dense">
         <item name="startIconTint">@color/textIconColor</item>
         <item name="endIconTint">@color/text_dark_color</item>

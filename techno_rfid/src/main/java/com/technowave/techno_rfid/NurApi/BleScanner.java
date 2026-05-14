@@ -122,10 +122,17 @@ public class BleScanner {
             return;
 
         // If requesting only BT devices, check for BT on
-        if (!mBluetoothAdapter.isEnabled())
+        if (mBluetoothAdapter == null || !mBluetoothAdapter.isEnabled())
         {
-            Log.w(TAG, "BT not ON");
+            Log.w(TAG, "BT not ON or adapter NULL");
             return;
+        }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            if (mOwner.checkSelfPermission(android.Manifest.permission.BLUETOOTH_SCAN) != PackageManager.PERMISSION_GRANTED) {
+                Log.e(TAG, "BLUETOOTH_SCAN permission not granted");
+                return;
+            }
         }
 
         mScanning = true;
@@ -146,7 +153,8 @@ public class BleScanner {
     }
 
     static public Set<BluetoothDevice> getPairedDevices() {
-        BluetoothManager bluetoothManager = (BluetoothManager)getInstance().mOwner.getSystemService(Context.BLUETOOTH_SERVICE);
+        Context context = getInstance().mOwner;
+        BluetoothManager bluetoothManager = (BluetoothManager)context.getSystemService(Context.BLUETOOTH_SERVICE);
         if (bluetoothManager == null) {
             return new HashSet<BluetoothDevice>();
         }
@@ -154,6 +162,14 @@ public class BleScanner {
         if (adapter == null) {
             return new HashSet<BluetoothDevice>();
         }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            if (context.checkSelfPermission(android.Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
+                Log.e(TAG, "BLUETOOTH_CONNECT permission not granted for getPairedDevices");
+                return new HashSet<BluetoothDevice>();
+            }
+        }
+        
         return adapter.getBondedDevices();
     }
 

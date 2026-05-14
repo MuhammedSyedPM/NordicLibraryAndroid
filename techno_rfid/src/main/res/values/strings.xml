@@ -197,6 +197,6 @@
     <string name="export_csv">Export and share inventory list as CSV file</string>
     <string name="share_via">Share via</string>
     <string name="connection_details">Connection Details</string>
-    <string name="nordic_settings">Nordic Settings</string>
+    <string name="nordic_settings">RFID Reader Settings</string>
 
 </resources>

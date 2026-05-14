@@ -80,7 +80,7 @@ public class MultiSelectionSpinner extends Spinner {
                 android.R.layout.simple_spinner_item);
         super.setAdapter(simple_adapter);
     }
-
+/*
     Drawable getProgressBarIndeterminate() {
         final int[] attrs = {android.R.attr.indeterminateDrawable};
         final int attrs_indeterminateDrawable_index = 0;
@@ -92,6 +92,8 @@ public class MultiSelectionSpinner extends Spinner {
         }
     }
 
+
+ */
     Runnable mFetchContentRunnable = null;
     boolean mFetchContentResult = false;
 

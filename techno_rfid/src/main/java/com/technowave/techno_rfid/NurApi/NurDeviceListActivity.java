@@ -30,15 +30,20 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
-import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.BaseAdapter;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.Manifest;
+import android.content.pm.PackageManager;
+import android.os.Build;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 
 import com.technowave.techno_rfid.NordicId.NurApi;
 import com.technowave.techno_rfid.R;
@@ -53,161 +58,195 @@ import java.util.List;
 
 public class NurDeviceListActivity extends Activity implements NurDeviceScanner.NurDeviceScannerListener {
     public static final String TAG = "NurDeviceListActivity";
+
     public NurDeviceScanner mDeviceScanner;
+
     public static final String REQUESTED_DEVICE_TYPES = "TYPE_LIST";
-    public static final int REQUEST_SELECT_DEVICE = 32778;
+    public static final int REQUEST_SELECT_DEVICE = 0x800A;
+
     public static final int RESULT_CANCELED = 0;
     public static final int RESULT_OK = 1;
-    public static final int REQ_BLE_DEVICES = 1;
-    public static final int REQ_USB_DEVICES = 2;
-    public static final int REQ_ETH_DEVICES = 4;
-    public static final int LAST_DEVICE = 4;
-    public static final int ALL_DEVICES = 7;
+
+    public static final int REQ_BLE_DEVICES = (1 << 0);
+    public static final int REQ_USB_DEVICES = (1 << 1);
+    public static final int REQ_ETH_DEVICES = (1 << 2);
+    public static final int LAST_DEVICE = REQ_ETH_DEVICES;
+    public static final int ALL_DEVICES = (LAST_DEVICE << 1) - 1;
     public static final String STR_SCANTIMEOUT = "SCAN_TIMEOUT";
     public static final String STR_CHECK_NID = "NID_FILTER_CHECK";
     public static final String SPECSTR = "SPECSTR";
     private int mRequestedDevices = 0;
     private boolean mCheckNordicID = false;
     List<NurDeviceSpec> mDeviceList;
-    private NurDeviceListActivity.DeviceAdapter deviceAdapter;
-    private static final long DEF_SCAN_PERIOD = 5000L;
-    private long mScanPeriod = 5000L;
+    private DeviceAdapter deviceAdapter;
+    private static final long DEF_SCAN_PERIOD = 5000;
+    // Default
+    private long mScanPeriod = DEF_SCAN_PERIOD;
     private boolean mScanning = false;
     private ProgressBar mScanProgress;
     private Button mCancelButton;
+    private CheckBox mCdcCheckBox;
+
+    private static final int PERMISSION_REQUEST_CODE = 1234;
+
     private static NurApi mApi;
-    private OnItemClickListener mDeviceClickListener = new OnItemClickListener() {
-        public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-            NurDeviceListActivity.this.mDeviceScanner.stopScan();
-            NurDeviceSpec deviceSpec = (NurDeviceSpec)NurDeviceListActivity.this.mDeviceList.get(position);
-            Bundle b = new Bundle();
-            b.putString("SPECSTR", deviceSpec.getSpec());
-            Intent result = new Intent();
-            result.putExtras(b);
-            NurDeviceListActivity.this.setResult(1, result);
-            NurDeviceListActivity.this.finish();
-        }
-    };
 
-    public NurDeviceListActivity() {
+    public void onScanStarted(){
+        Log.d(TAG,"Scan for devices started");
+        mScanProgress.setVisibility(View.VISIBLE);
+        mCancelButton.setText(R.string.text_cancel);
+        mScanning = true;
     }
 
-    public void onScanStarted() {
-        Log.d("NurDeviceListActivity", "Scan for devices started");
-        this.mScanProgress.setVisibility(View.VISIBLE);
-        this.mCancelButton.setText(R.string.cancel);
-        this.mScanning = true;
+    public void onDeviceFound(NurDeviceSpec device){
+        mDeviceList.add(device);
+        deviceAdapter.notifyDataSetChanged();
     }
 
-    public void onDeviceFound(NurDeviceSpec device) {
-        this.mDeviceList.add(device);
-        this.deviceAdapter.notifyDataSetChanged();
+    public void onScanFinished(){
+        Log.d(TAG,"Scan for devices finished");
+        mCancelButton.setText(R.string.text_scan);
+        mScanning = false;
+        mScanProgress.setVisibility(View.GONE);
     }
 
-    public void onScanFinished() {
-        Log.d("NurDeviceListActivity", "Scan for devices finished");
-        this.mCancelButton.setText(R.string.scan);
-        this.mScanning = false;
-        this.mScanProgress.setVisibility(View.GONE);
-    }
-
+    @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        this.setResult(0);
-        Log.d("NurDeviceListActivity", "onCreate");
-        this.setContentView(R.layout.device_list);
-        WindowManager.LayoutParams layoutParams = this.getWindow().getAttributes();
-        layoutParams.gravity = 48;
+        setResult(RESULT_CANCELED);
+        Log.d(TAG, "onCreate");
+        setContentView(R.layout.device_list);
+        android.view.WindowManager.LayoutParams layoutParams = this.getWindow().getAttributes();
+        layoutParams.gravity = Gravity.TOP;
         layoutParams.y = 200;
-        this.mCancelButton = (Button)this.findViewById(R.id.btn_cancel);
-        this.mScanProgress = (ProgressBar)this.findViewById(R.id.scan_progress);
-        this.mScanProgress.setVisibility(View.VISIBLE);
-        this.mScanProgress.setScaleY(0.5F);
-        this.mScanProgress.setScaleX(0.5F);
-        this.mRequestedDevices = this.getIntent().getIntExtra("TYPE_LIST", 7);
-        this.mScanPeriod = this.getIntent().getLongExtra("SCAN_TIMEOUT", 5000L);
-        this.mCheckNordicID = this.getIntent().getBooleanExtra("NID_FILTER_CHECK", true);
-        this.mDeviceScanner = new NurDeviceScanner(this, this.mRequestedDevices, this, mApi);
-        if ((this.mRequestedDevices & 1) != 0) {
-            this.mCancelButton.setOnClickListener(new OnClickListener() {
-                public void onClick(View v) {
-                    if (!NurDeviceListActivity.this.mScanning) {
-                        NurDeviceListActivity.this.mDeviceScanner.scanDevices();
-                    } else {
-                        NurDeviceListActivity.this.mDeviceScanner.stopScan();
-                        if (!NurDeviceListActivity.this.mDeviceScanner.isEthQueryRunning()) {
-                            NurDeviceListActivity.this.finish();
-                        } else {
-                            NurDeviceListActivity.this.showMessage("Ethernet query not ready...");
-                        }
-                    }
 
+        mCancelButton = (Button) findViewById(R.id.btn_cancel);
+        mCdcCheckBox = (CheckBox) findViewById(R.id.cb_cdc_mode);
+        mScanProgress = (ProgressBar) findViewById(R.id.scan_progress);
+        mScanProgress.setVisibility(View.VISIBLE);
+        mScanProgress.setScaleY(0.5f);
+        mScanProgress.setScaleX(0.5f);
+
+        mRequestedDevices = getIntent().getIntExtra(REQUESTED_DEVICE_TYPES, ALL_DEVICES);
+        mScanPeriod = getIntent().getLongExtra(STR_SCANTIMEOUT, DEF_SCAN_PERIOD);
+        mCheckNordicID = getIntent().getBooleanExtra(STR_CHECK_NID, true);
+
+        /** Device scanner **/
+        mDeviceScanner = new NurDeviceScanner(this,mRequestedDevices,this, mApi);
+        /** **/
+
+        if ((mRequestedDevices & REQ_BLE_DEVICES) != 0) {
+            mCancelButton.setOnClickListener(new OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    if (!mScanning) {
+                        mDeviceScanner.scanDevices();
+                    }
+                    else {
+                        mDeviceScanner.stopScan();
+                        if (!mDeviceScanner.isEthQueryRunning())
+                            finish();
+                        else
+                            showMessage("Ethernet query not ready...");
+                    }
                 }
             });
-        } else {
-            this.mCancelButton.setEnabled(false);
-        }
+        } else
+            mCancelButton.setEnabled(false);
 
-        this.populateList();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_SCAN) != PackageManager.PERMISSION_GRANTED ||
+                ContextCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
+                
+                ActivityCompat.requestPermissions(this,
+                        new String[]{Manifest.permission.BLUETOOTH_SCAN, Manifest.permission.BLUETOOTH_CONNECT},
+                        PERMISSION_REQUEST_CODE);
+                return;
+            }
+        }
+        
+        populateList();
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == PERMISSION_REQUEST_CODE) {
+            boolean allGranted = true;
+            for (int result : grantResults) {
+                if (result != PackageManager.PERMISSION_GRANTED) {
+                    allGranted = false;
+                    break;
+                }
+            }
+            if (allGranted) {
+                populateList();
+            } else {
+                showMessage("Bluetooth permissions are required for scanning.");
+                finish();
+            }
+        }
     }
 
     private void populateList() {
-        Log.d("NurDeviceListActivity", "populateList");
-        this.mDeviceList = new ArrayList();
-        this.deviceAdapter = new NurDeviceListActivity.DeviceAdapter(this, this.mDeviceList);
-        ListView newDevicesListView = (ListView)this.findViewById(R.id.new_devices);
-        newDevicesListView.setAdapter(this.deviceAdapter);
-        newDevicesListView.setOnItemClickListener(this.mDeviceClickListener);
-        this.mDeviceScanner.scanDevices();
+        /* Initialize device list container */
+        Log.d(TAG, "populateList");
+        ListView newDevicesListView;
+        mDeviceList = new ArrayList<NurDeviceSpec>();
+        deviceAdapter = new DeviceAdapter(this, mDeviceList);
+        newDevicesListView = (ListView) findViewById(R.id.new_devices);
+        newDevicesListView.setAdapter(deviceAdapter);
+        newDevicesListView.setOnItemClickListener(mDeviceClickListener);
+        mDeviceScanner.scanDevices();
     }
 
+    @Override
     public void onStart() {
         super.onStart();
-        IntentFilter filter = new IntentFilter("android.bluetooth.device.action.FOUND");
-        filter.addAction("android.bluetooth.adapter.action.DISCOVERY_FINISHED");
-        filter.addAction("android.bluetooth.adapter.action.STATE_CHANGED");
+        IntentFilter filter = new IntentFilter(BluetoothDevice.ACTION_FOUND);
+        filter.addAction(BluetoothAdapter.ACTION_DISCOVERY_FINISHED);
+        filter.addAction(BluetoothAdapter.ACTION_STATE_CHANGED);
     }
 
+    @Override
     public void onStop() {
         super.onStop();
-        this.mDeviceScanner.stopScan();
+        mDeviceScanner.stopScan();
     }
 
+    @Override
     protected void onDestroy() {
         super.onDestroy();
-        this.mDeviceScanner.stopScan();
+        mDeviceScanner.stopScan();
     }
+
+    private OnItemClickListener mDeviceClickListener = new OnItemClickListener() {
+    	
+        @Override
+        public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+            NurDeviceSpec deviceSpec;
+            mDeviceScanner.stopScan();
+            deviceSpec = mDeviceList.get(position);
+
+            if (deviceSpec.getType().equalsIgnoreCase("USB") && mCdcCheckBox != null && mCdcCheckBox.isChecked()) {
+                deviceSpec.setPart("cdc", "1");
+            }
+
+            Bundle b = new Bundle();
+            // e.g. "type=BLE;addr=00:00:00:00:00:00;name=XXX;rssi=-44"
+            b.putString(SPECSTR, deviceSpec.getSpec());
+            Intent result = new Intent();
+            result.putExtras(b);
+            setResult(RESULT_OK, result);
+            finish();
+        }
+    };
 
     protected void onPause() {
         super.onPause();
-        this.mDeviceScanner.stopScan();
+        mDeviceScanner.stopScan();
     }
-
-    private void showMessage(String msg) {
-        Toast.makeText(this, msg, Toast.LENGTH_LONG).show();
-    }
-
-    public static void startDeviceRequest(Activity activity, NurApi api) throws InvalidParameterException {
-        startDeviceRequest(activity, 7, 0L, false, api);
-    }
-
-    public static void startDeviceRequest(Activity activity, int devMask, NurApi api) throws InvalidParameterException {
-        startDeviceRequest(activity, devMask, 0L, false, api);
-    }
-
-    public static void startDeviceRequest(Activity activity, int devMask, long scanTimeout, boolean filterNID, NurApi api) throws InvalidParameterException {
-        if (devMask != 0 && (devMask & 7) != 0) {
-            mApi = api;
-            Intent newIntent = new Intent(activity.getApplicationContext(), NurDeviceListActivity.class);
-            newIntent.putExtra("TYPE_LIST", devMask & 7);
-            newIntent.putExtra("SCAN_TIMEOUT", scanTimeout);
-            newIntent.putExtra("NID_FILTER_CHECK", filterNID);
-            activity.startActivityForResult(newIntent, 32778);
-        } else {
-            throw new InvalidParameterException("startDeviceRequest(): no devices specified or context is invalid");
-        }
-    }
-
+    
     class DeviceAdapter extends BaseAdapter {
         Context context;
         List<NurDeviceSpec> devices;
@@ -215,62 +254,96 @@ public class NurDeviceListActivity extends Activity implements NurDeviceScanner.
 
         public DeviceAdapter(Context context, List<NurDeviceSpec> devices) {
             this.context = context;
-            this.inflater = LayoutInflater.from(context);
+            inflater = LayoutInflater.from(context);
             this.devices = devices;
         }
 
+        @Override
         public int getCount() {
-            return this.devices.size();
+            return devices.size();
         }
 
+        @Override
         public Object getItem(int position) {
-            return this.devices.get(position);
+            return devices.get(position);
         }
 
+        @Override
         public long getItemId(int position) {
-            return (long)position;
+            return position;
         }
 
+        @Override
         public View getView(int position, View convertView, ViewGroup parent) {
             ViewGroup vg;
+
             if (convertView != null) {
-                vg = (ViewGroup)convertView;
+                vg = (ViewGroup) convertView;
             } else {
-                vg = (ViewGroup)this.inflater.inflate(R.layout.device_element, (ViewGroup)null);
+                vg = (ViewGroup) inflater.inflate(R.layout.device_element, null);
             }
 
-            NurDeviceSpec deviceSpec = (NurDeviceSpec)this.devices.get(position);
-            TextView tvadd = (TextView)vg.findViewById(R.id.address);
-            TextView tvname = (TextView)vg.findViewById(R.id.name);
-            TextView tvpaired = (TextView)vg.findViewById(R.id.paired);
-            TextView tvrssi = (TextView)vg.findViewById(R.id.rssi);
+            NurDeviceSpec deviceSpec = devices.get(position);
+            final TextView tvadd = ((TextView) vg.findViewById(R.id.address));
+            final TextView tvname = ((TextView) vg.findViewById(R.id.name));
+            final TextView tvpaired = (TextView) vg.findViewById(R.id.paired);
+            final TextView tvrssi = (TextView) vg.findViewById(R.id.rssi);
+
             if (deviceSpec.getType().equals("BLE")) {
                 int rssiVal = deviceSpec.getRSSI();
-                if (rssiVal < 0) {
+                if (rssiVal < 0)    // Might be also != 0...
                     tvrssi.setText("RSSI: " + rssiVal);
-                } else {
+                else
                     tvrssi.setText("RSSI: N/A");
-                }
 
                 tvrssi.setVisibility(View.VISIBLE);
+
                 if (deviceSpec.getBondState()) {
                     tvpaired.setVisibility(View.VISIBLE);
                 } else {
                     tvpaired.setVisibility(View.GONE);
                 }
-            } else {
+            }
+            else {
                 tvpaired.setVisibility(View.GONE);
                 tvrssi.setVisibility(View.GONE);
             }
 
             tvname.setText(deviceSpec.getName());
+
             if (deviceSpec.getType().equals("TCP")) {
-                tvadd.setText(deviceSpec.getAddress() + " (" + deviceSpec.getPart("transport", "LAN") + ")");
+                tvadd.setText(deviceSpec.getAddress() + " ("+deviceSpec.getPart("transport", "LAN")+")");
             } else {
                 tvadd.setText(deviceSpec.getAddress());
             }
 
             return vg;
         }
+    }
+
+    private void showMessage(String msg) {
+        Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
+    }
+
+    public static void startDeviceRequest(Activity activity, NurApi api) throws InvalidParameterException
+    {
+        startDeviceRequest(activity, ALL_DEVICES, 0, false,api);
+    }
+
+    public static void startDeviceRequest(Activity activity, int devMask, NurApi api) throws InvalidParameterException
+    {
+        startDeviceRequest(activity, devMask, 0, false,api);
+    }
+
+    public static void startDeviceRequest(Activity activity, int devMask, long scanTimeout, boolean filterNID, NurApi api) throws InvalidParameterException
+    {
+        if (devMask == 0 || (devMask & ALL_DEVICES) == 0)
+            throw new InvalidParameterException("startDeviceRequest(): no devices specified or context is invalid");
+        mApi = api;
+        Intent newIntent = new Intent(activity.getApplicationContext(), NurDeviceListActivity.class);
+        newIntent.putExtra(REQUESTED_DEVICE_TYPES, devMask & ALL_DEVICES);
+        newIntent.putExtra(STR_SCANTIMEOUT, scanTimeout);
+        newIntent.putExtra(STR_CHECK_NID, filterNID);
+        activity.startActivityForResult(newIntent, NurDeviceListActivity.REQUEST_SELECT_DEVICE);
     }
 }

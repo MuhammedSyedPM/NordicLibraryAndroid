@@ -33,7 +33,7 @@
             android:layout_marginTop="@dimen/spacing_medium"
             android:layout_marginEnd="@dimen/spacing_medium"
             android:textAppearance="@style/TextAppearance.AppCompat.Headline"
-            android:textColor="@color/text_dark_color" />
+            android:textColor="?android:attr/textColorPrimary" />
 
         <View
             android:layout_width="match_parent"
@@ -51,7 +51,6 @@
             android:layout_height="wrap_content"
             android:layout_alignParentEnd="true"
             android:layout_centerVertical="true"
-            android:indeterminateTint="@color/mns_dark_color"
             android:layout_marginEnd="@dimen/spacing_medium"
             android:indeterminate="true" />
     </RelativeLayout>
@@ -72,13 +71,24 @@
             android:dividerHeight="1dp"
             android:stackFromBottom="true" />
 
-        <androidx.appcompat.widget.AppCompatButton
-            android:id="@+id/btn_cancel"
-            style="@style/ExtendedButtonRound"
+        <CheckBox
+            android:id="@+id/cb_cdc_mode"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/spacing_medium"
+            android:layout_marginEnd="@dimen/spacing_medium"
+            android:text="Enable CDC Mode (Serial USB)"
+            android:textColor="?android:attr/textColorPrimary"
+            android:checked="true" />
+
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/btn_cancel"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@color/black"
             android:layout_margin="@dimen/spacing_medium"
             android:text="@android:string/cancel"
-            android:textAllCaps="false" />
+            android:textAllCaps="false"
+            android:textColor="@color/white" />
     </LinearLayout>
 </LinearLayout>
